@@ -1,0 +1,21 @@
+<%- include('partials/_htmlhead'); -%>
+
+<h1><%= title %></h1>
+
+<table>
+  <tr><th>GET values</th><td><%= get %></td></tr>
+  <tr><th>POST values</th><td><%= post %></td></tr>
+</table>
+
+<p>Send this page a <a href="/form/?value=123">GET request</a> or a POST request&hellip;</p>
+
+<form action="/form/" method="post">
+
+  <div><input type="text" name="name" placeholder="your name" value="<%= body.name %>" width="20" maxlength="30" required /></div>
+  <div><input type="email" name="email" placeholder="your email" value="<%= body.email %>" width="20" maxlength="50" /></div>
+  <input type="hidden" name="date" value="<%= new Date(); %>" />
+  <button>submit</button>
+
+</form>
+
+<%- include('partials/_htmlfoot'); -%>
