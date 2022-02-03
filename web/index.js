@@ -1,18 +1,18 @@
-// initialize questions database
-import { quizQuestionCount } from './lib/init.js';
-
-import { hostname } from 'os';
-
-// Express.js application
+// Express.js
 import express from 'express';
 import compression from 'compression';
 
-import { formRoute } from './routes/form.js';
+// modules
+import { questionCount } from './libshared/quizdb.js';
+import { questionsImport } from './lib/questionsimport.js';
 
 // configuration
 const cfg = {
   dev: ((process.env.NODE_ENV).trim().toLowerCase() !== 'production'),
-  port: process.env.NODE_PORT || 8000
+  port: process.env.NODE_PORT || 8000,
+  domain: process.env.QUIZ_WEB_DOMAIN,
+  title: process.env.QUIZ_TITLE,
+  questionsMax: parseInt(process.env.QUIZ_QUESTIONS_MAX, 10)
 };
 
 // Express initiation
@@ -22,6 +22,9 @@ const app = express();
 app.set('view engine', 'ejs');
 app.set('views', 'views');
 
+// body parsing
+app.use(express.urlencoded({ extended: true }));
+
 // GZIP
 app.use(compression());
 
@@ -29,22 +32,32 @@ app.use(compression());
 app.use(express.urlencoded({ extended: true }));
 
 // home page
-app.get('/', (req, res) => {
-  res.render('message', { title: 'Hello World! ' + hostname });
+app.get('/', async (req, res) => {
+
+  if (typeof req.query.import !== 'undefined') {
+
+    // import new questions and redirect back
+    res.redirect(`/?imported=${ await questionsImport() }`);
+
+  }
+  else {
+
+    // home page template
+    res.render('home', {
+      title: cfg.title,
+      questions: await questionCount(),
+      questionsMax: cfg.questionsMax,
+      imported: req.query?.imported || null
+    });
+
+  }
+
 });
 
-// question count
-app.get('/count/', async (req, res) => {
-  res.render('message', { title: 'question count: ' + quizQuestionCount });
-});
+// create a new game
+app.post('/new', async (req, res) => {
 
-// chat page
-app.get('/chat/', (req, res) => {
-  res.render('chat', { title: 'chat', wsHost: process.env.QUIZ_WS_DOMAIN });
 });
-
-// routes
-app.use('/form/', formRoute);
 
 // static assets
 app.use(express.static('static'));
@@ -55,7 +68,7 @@ app.use((req, res) => {
 });
 
 app.listen(cfg.port, () => {
-  console.log(`Server listening at http://localhost:${ cfg.port }`);
+  console.log(`Server started at ${ cfg.domain }`);
 });
 
 export { cfg, express, app };

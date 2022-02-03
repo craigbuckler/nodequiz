@@ -7,5 +7,6 @@
 
 .npm
 node_modules
+libshared
 
 web.Dockerfile

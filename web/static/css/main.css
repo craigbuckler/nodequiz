@@ -1,86 +1,101 @@
 :root {
   --font: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  --font-size: clamp(1em, 2vw, 1.5em);
+  --color-back1: #dcffe6;
+  --color-back2: #fff;
+  --color-back3: #aacab3;
+  --color-fore1: #333;
+  --color-link1: #003d10;
+  --color-wrong1: #9c0004;
+  --color-wrong2: #ff0006;
+  --color-right1: #00ba32;
+  --color-right2: #00ff45;
 }
 
 *, *:before, *:after {
   box-sizing: border-box;
-  font-family: var(--font);
-  font-weight: normal;
+  font-weight: 400;
   padding: 0;
   margin: 0;
-  line-height: 1;
+  line-height: 1.4;
 }
 
-html, body, main {
-  width: 100%;
-  height: 100%;
+body, input, textarea, button, table {
+  font-family: var(--font);
+  font-size: var(--font-size);
+  color: var(--color-fore1);
+  background-color: var(--color-back1);
 }
 
-body {
-  font-size: 1.2rem;
-  font-weight: 300;
-  color: #222;
-  background-color: #fff;
-}
-
-h1 {
-  font-size: 1.3em;
+header {
   padding: 0.2em 1em;
+  color: var(--color-back2);
+  background-color: var(--color-right1);
 }
 
 main {
-  display: grid;
-  grid-template-rows: min-content 1fr min-content;
-}
-
-#chat {
-  display: grid;
-  grid-auto-rows: min-content;
-  grid-template-columns: min-content 1fr;
-  margin: 0 1em;
-  padding: 0.5em 1em;
-  border: 1px solid #888;
-  scroll-behavior: smooth;
-  overflow: auto;
-}
-
-div {
-  white-space: normal;
-  line-height: 1.4;
-  padding: 0.2em 0.5em 0.2em 0;
-  height: min-content;
-}
-
-div.name {
-  white-space: nowrap;
-  color: #66a;
-}
-
-form {
-  display: flex;
-  flex-wrap: wrap;
   padding: 1em;
 }
 
-input, button {
-  font-size: 1.2rem;
+main > :first-child {
+  margin-top: 0;
+}
+
+h1 {
+  font-size: 2rem;
+}
+
+h2 {
+  font-size: 1.4rem;
+  margin-top: 1em;
+}
+
+p {
+  margin-top: 1em;
+}
+
+a:link, a:visited {
+  color: var(--color-link1);
+}
+
+input[type=number] {
+  font-size: var(--font-size);
   width: 5em;
-  flex: 1 1 auto;
-  padding: 4px;
-  border: 0 none;
-  border-radius: 0;
-  outline: none;
+  font-weight: 600;
+  text-align: center;
+  padding: 0.3em 0.3em 0.3em 1em;
+  background-color: var(--color-back2);
+  border: 3px solid var(--color-right1);
+  border-radius: 3px;
+  outline: 0 none;
 }
 
-input:focus, button:focus {
-  outline: none;
+input[type=number]:invalid {
+  border-color: var(--color-wrong1)
 }
 
-input#name {
-  width: 10em;
+button {
+  display: block;
+  font-weight: 600;
+  padding: 0.3em 1em;
+  margin: 1em auto 0 auto;
+  background-color: var(--color-back3);
+  border: 3px solid var(--color-fore1);
+  border-radius: 3px;
 }
 
-input#message {
-  width: auto;
-  flex: 8 1 auto;
+button:hover, button:focus {
+  background-color: var(--color-right2);
+}
+
+.formgrid {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 50% 50%;
+  grid-gap: 0.5em;
+  margin: 1em auto;
+}
+
+.formgrid label {
+  text-align: right;
 }

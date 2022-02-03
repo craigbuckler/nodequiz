@@ -22,7 +22,7 @@ COPY --chown=node:node package*.json $HOME/
 # install application modules
 RUN npm install
 
-# copy remaining files and build
+# copy remaining files
 COPY --chown=node:node . .
 
 # expose port on the host

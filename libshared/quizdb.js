@@ -1,6 +1,11 @@
 // PostgreSQL database methods
 import pg from 'pg';
 
+// data type parsers
+pg.types.setTypeParser(pg.types.builtins.INT2, v => parseInt(v, 10));
+pg.types.setTypeParser(pg.types.builtins.INT4, v => parseInt(v, 10));
+pg.types.setTypeParser(pg.types.builtins.INT8, v => parseFloat(v));
+
 const pool = new pg.Pool({
   host: process.env.POSTGRES_SERVER,
   port: process.env.POSTGRES_PORT,
@@ -13,8 +18,8 @@ const pool = new pg.Pool({
 // count questions in database
 export async function questionCount() {
 
-  const count = await query('SELECT COUNT(1) FROM question;');
-  return parseInt( count?.[0]?.count || 0, 10);
+  const res = await query('SELECT COUNT(1) FROM question;');
+  return res?.[0]?.count;
 
 }
 
