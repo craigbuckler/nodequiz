@@ -1,4 +1,5 @@
 // PostgreSQL database methods
+import EventEmitter from 'events';
 import pg from 'pg';
 
 // data type parsers
@@ -18,7 +19,7 @@ const pool = new pg.Pool({
 // count questions in database
 export async function questionCount() {
 
-  const res = await query('SELECT COUNT(1) FROM question;');
+  const res = await dbSelect('SELECT COUNT(1) FROM question;');
   return res?.[0]?.count;
 
 }
@@ -36,23 +37,32 @@ export async function questionAdd(question, answer) {
     await client.query('BEGIN');
 
     // add question
-    const q = await client.query('INSERT INTO question(text) VALUES($1) RETURNING id;', [ question ]);
+    const qId = await dbInsert({
+      client,
+      table: 'question',
+      values: {
+        text: question
+      },
+      return: 'id'
+    })
 
-    if (q.rowCount === 1) {
-
-      // question id
-      const qId = q.rows[0].id;
+    if (qId) {
 
       // insert answers in sequence
       let inserted = 0;
       for (let item of answer) {
 
-        const a = await client.query(
-          'INSERT INTO answer(question_id, text, correct) VALUES($1, $2, $3);',
-          [ qId, item.text, item.correct ]
-        );
+        const a = await dbInsert({
+          client,
+          table: 'answer',
+          values: {
+            question_id: qId,
+            text: item.text,
+            correct: item.correct
+          }
+        });
 
-        inserted += a.rowCount || 0;
+        if (a) inserted++;
 
       }
 
@@ -63,7 +73,6 @@ export async function questionAdd(question, answer) {
 
   }
   catch(err) {
-    // database error
   }
   finally {
 
@@ -83,8 +92,91 @@ export async function questionAdd(question, answer) {
 }
 
 
-// database query
-async function query(sql, arg = []) {
+// create a new game
+export async function gameCreate(data) {
+
+  const qCount = await questionCount();
+
+  return await dbInsert({
+    table: 'game',
+    values: {
+      question_offset : Math.floor( Math.random() * qCount ), // random starting question
+      questions_asked : clamp(1, data.questions_asked, 50),
+      timeout_max     : clamp(1, data.timeout_max, 50),
+      timeout_answered: clamp(1, data.timeout_answered, 50),
+      score_correct   : clamp(1, data.score_correct, 50),
+      score_fastest   : clamp(1, data.score_fastest, 50),
+      score_incorrect : clamp(1, data.score_incorrect, 50),
+      score_noanswer  : clamp(1, data.score_noanswer, 50)
+    },
+    return: 'id'
+  });
+
+}
+
+
+// remove a game
+export async function gameRemove( gameId ) {
+
+  return await dbDelete({
+    table: 'game',
+    values: { id: gameId }
+  });
+
+}
+
+
+// fetch game data
+export async function gameFetch( gameId ) {
+
+  const game = await dbSelect('SELECT * FROM game WHERE id=$1;', [ gameId ]);
+  return game?.[0];
+
+}
+
+
+// create a new player
+export async function playerCreate( game_id, name ) {
+
+  return await dbInsert({
+    table: 'player',
+    values: { game_id, name },
+    return: 'id'
+  });
+
+}
+
+
+// remove a player
+export async function playerRemove( playerId ) {
+
+  return await dbDelete({
+    table: 'player',
+    values: { id: playerId }
+  });
+
+}
+
+
+// count players on a game
+export async function playerCount( gameId ) {
+
+  const res = await dbSelect('SELECT COUNT(1) FROM player WHERE game_id=$1;', [ gameId ]);
+  return res?.[0]?.count;
+
+}
+
+
+// fetch data for all players
+export async function playersFetch( gameId ) {
+
+  return await dbSelect('SELECT * FROM player WHERE game_id=$1;', [ gameId ]);
+
+}
+
+
+// database SELECT
+async function dbSelect(sql, arg = []) {
 
   const client = await pool.connect();
 
@@ -98,5 +190,132 @@ async function query(sql, arg = []) {
   finally {
     client.release();
   }
+
+}
+
+
+// database INSERT
+async function dbInsert(ins) {
+
+  const
+    ret = ins.return ? ` RETURNING ${ ins.return }` : '',
+    key = Object.keys( ins.values ),
+    sym = key.map( (v,i) => `$${i + 1}` ),
+    sql = `INSERT INTO ${ ins.table } (${ key.join() }) VALUES(${ sym.join() })${ ret };`,
+    client = ins.client || await pool.connect();
+
+  let success = false;
+
+  try {
+
+    // run insert
+    const i = await client.query(sql, Object.values( ins.values ));
+
+    // successful?
+    success = i.rowCount === 1;
+
+    // return value?
+    if (success && ins.return) {
+      success = i.rows[0][ ins.return ];
+    }
+
+  }
+  catch(err) {
+  }
+  finally {
+    if (!ins.client) client.release();
+  }
+
+  return success;
+
+}
+
+
+// database delete
+async function dbDelete(del) {
+
+  const
+    key = Object.keys( del.values ).map((v, i) => `${ v }=$${ i+1 }`),
+    sql = `DELETE FROM ${ del.table } WHERE ${ key.join(' AND ') };`,
+    client = del.client || await pool.connect();
+
+  let deleted = false;
+
+  try {
+
+    // run delete
+    const d = await client.query(sql, Object.values( del.values ));
+    deleted = d.rowCount;
+
+  }
+  catch(err) {
+  }
+  finally {
+    if (!del.client) client.release();
+  }
+
+  return deleted;
+
+}
+
+
+// pubsub event emitter
+class PubSub extends EventEmitter {
+
+  constructor(delay) {
+    super();
+  }
+
+  async listen() {
+
+    const client = await pool.connect();
+
+    client.on('notification', event => {
+
+      try {
+        const payload = JSON.parse( event.payload );
+        if ( payload ) {
+
+          this.emit(
+            `event:${ payload.game_id }`,
+            {
+              gameId: payload.game_id,
+              type: payload.type,
+              data: payload.data
+            }
+          );
+
+        }
+      }
+      catch (e) {
+      }
+
+    });
+
+    client.query('LISTEN pubsub_insert;');
+
+  }
+
+}
+
+export const pubsub = new PubSub();
+
+
+// broadcast an event
+export async function broadcast( game_id, type, data ) {
+
+  return await dbInsert({
+    table: 'pubsub',
+    values: { game_id, type, data },
+    return: 'id'
+  });
+
+}
+
+
+// return integer between low and high values
+function clamp(min = 0, value = 0, max = 0) {
+
+  return Math.max(min, Math.min(parseInt(value || '0', 10) || 0, max));
 
 }

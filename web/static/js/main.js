@@ -1,66 +1,106 @@
-// get page DOM nodes
-const dom = { form: 0, chat: 0, name: 0, message: 0 };
-for (let n in dom) dom[n] = document.getElementById(n);
+// modules
+import * as player from './player.js';
 
-// set user's name
-dom.name.value = decodeURIComponent(location.search.trim().slice(1,1 + window.cfg.nameLen)) || 'Anonymous' + Math.floor(Math.random() * 99999);
+// DOM
+const dom = {
+  body: document.body,
+  start: document.getElementById('start')
+};
 
-wsInit( window.cfg.wsHost );
+// state
+const state = {
+  current: 'join'
+};
+
+dom.body.className = state.current;
 
 // handle WebSocket communication
-function wsInit(wsServer) {
-
-  const ws = new WebSocket(wsServer);
-
-  // connect to server
-  ws.addEventListener('open', () => {
-    sendMessage('entered the chat room');
-  });
-
-  // receive message
-  ws.addEventListener('message', e => {
-
-    try {
-
-      const
-        chat = JSON.parse(e.data),
-        name = document.createElement('div'),
-        msg  = document.createElement('div');
-
-      name.className = 'name';
-      name.textContent = (chat.name || 'unknown');
-      dom.chat.appendChild(name);
-
-      msg.className = 'msg';
-      msg.textContent = (chat.msg || 'said nothing');
-      dom.chat.appendChild(msg).scrollIntoView({ behavior: 'smooth' });
-
-    }
-    catch(err) {
-      console.log('invalid JSON', err);
-    }
-
-  });
+const ws = new WebSocket( window.cfg.wsDomain );
 
 
-  // form submit
-  dom.form.addEventListener('submit', e => {
-    e.preventDefault();
-    sendMessage();
-    dom.message.value = '';
-    dom.message.focus();
-  }, false);
+// connect to server and send game ID and initial player name
+ws.addEventListener('open', () => {
+  sendMessage( 'gameInit', { gameId: window.cfg.gameId, playerName: window.cfg.playerName } );
+});
 
 
-  // send message
-  function sendMessage(setMsg) {
+// send message
+function sendMessage(type, data = null) {
+  ws.send( `${ type }:${ JSON.stringify( data ) }` );
+}
 
-    let
-      name = dom.name.value.trim(),
-      msg =  setMsg || dom.message.value.trim();
+// receive message
+ws.addEventListener('message', e => {
 
-    name && msg && ws.send( JSON.stringify({ name, msg }) );
+  const { type, data } = parseMessage( e.data );
+  if (!type || !data) return;
+
+  console.log(type, data);
+
+  switch (type) {
+
+    case 'player':
+      player.init( data );
+      break;
+
+    case 'playerAdd':
+      player.add( data );
+      break;
+
+    case 'playerRemove':
+      player.remove( data );
+      break;
+
+    case 'start':
+      state.current = 'start';
+      player.start( data.playerId );
+      break;
 
   }
+
+  dom.body.className = state.current;
+
+});
+
+
+// close connection
+ws.addEventListener('close', () => {
+  console.log('connection closed');
+});
+
+
+// start button
+dom.start.addEventListener('click', e => {
+  if (state.current === 'join') sendMessage('start');
+});
+
+
+// parse incoming message in format "type:data"
+// e.g. 'myMessage:{"value",123}' returns { type: "myMessage", data: { "value": 123 }}
+function parseMessage( msg ) {
+
+  msg = msg.toString().trim();
+
+  let
+    s = msg.indexOf(':'),
+    type = null,
+    data = {};
+
+  if (s > 0) {
+    type = msg.slice(0, s);
+    data = msg.slice(s + 1);
+
+    try {
+      let json = JSON.parse(data);
+      data = json;
+    }
+    catch(e){}
+
+  }
+  else {
+    type = msg;
+  }
+
+  return { type, data };
 
 }

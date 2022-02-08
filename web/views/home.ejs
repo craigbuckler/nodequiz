@@ -14,7 +14,7 @@
 
   <% } %>
 
-  <p><%= questions %> questions from the <a href="https://opentdb.com/">Open Trivia Database</a></p>
+  <p>Quiz has <%= questions %> questions from the <a href="https://opentdb.com/">Open Trivia Database</a>.</p>
 
   <% if (questions < questionsMax) { %>
 
@@ -24,40 +24,79 @@
 
   <% if (questions > 99) { %>
 
-    <h2>Start a new quiz</h2>
+    <section class="tabs">
 
-    <form action="/new/" method="post">
+      <article id="new">
 
-      <div class="formgrid">
+        <h2>START A NEW GAME</h2>
 
-        <label for="questions_asked">number of questions:</label>
-        <div><input type="number" name="questions_asked" id="questions_asked" value="10" min="1" max="50" required /></div>
+        <form action="/newgame/" method="post">
 
-        <label for="timeout">answer time limit:</label>
-        <div><input type="number" name="timeout" id="timeout" value="60" min="5" max="180" required /> seconds</div>
+          <div class="formgrid">
 
-        <label for="timeout_answered">time limit after first correct:</label>
-        <div><input type="number" name="timeout_answered" id="timeout_answered" value="5" min="5" max="180" required /> seconds</div>
+            <label for="namenew">your name:</label>
+            <div><input type="text" name="name" id="namenew" value="" minlength="1" maxlength="10" pattern="[A-Za-z0-9]{1,10}" required /></div>
 
-        <label for="score_correct">score for correct answer:</label>
-        <div><input type="number" name="score_correct" id="score_correct" value="1" min="-100" max="100" required /> points</div>
+            <label for="questions_asked">number of questions:</label>
+            <div><input type="number" name="questions_asked" id="questions_asked" value="10" min="1" max="50" required /></div>
 
-        <label for="score_fastest">bonus for fastest player:</label>
-        <div><input type="number" name="score_fastest" id="score_fastest" value="1" min="-100" max="100" required /> points</div>
+            <label for="timeout_max">answer time limit:</label>
+            <div><input type="number" name="timeout_max" id="timeout_max" value="60" min="5" max="180" required /> seconds</div>
 
-        <label for="score_incorrect">score for incorrect answer:</label>
-        <div><input type="number" name="score_incorrect" id="score_incorrect" value="-1" min="-100" max="100" required /> points</div>
+            <label for="timeout_answered">time limit after first correct:</label>
+            <div><input type="number" name="timeout_answered" id="timeout_answered" value="5" min="5" max="180" required /> seconds</div>
 
-        <label for="score_noanswer">score for no answer:</label>
-        <div><input type="number" name="score_noanswer" id="score_noanswer" value="0" min="-100" max="100" required /> points</div>
-      </div>
+            <label for="score_correct">score for correct answer:</label>
+            <div><input type="number" name="score_correct" id="score_correct" value="1" min="-100" max="100" required /> points</div>
 
-      <button>ENTER QUIZ LOBBY&hellip;</button>
+            <label for="score_fastest">bonus for fastest player:</label>
+            <div><input type="number" name="score_fastest" id="score_fastest" value="1" min="-100" max="100" required /> points</div>
 
-    </form>
+            <label for="score_incorrect">score for incorrect answer:</label>
+            <div><input type="number" name="score_incorrect" id="score_incorrect" value="-1" min="-100" max="100" required /> points</div>
+
+            <label for="score_noanswer">score for no answer:</label>
+            <div><input type="number" name="score_noanswer" id="score_noanswer" value="0" min="-100" max="100" required /> points</div>
+          </div>
+
+          <button>ENTER QUIZ LOBBY&hellip;</button>
+
+        </form>
+
+        <p><a href="#join">or join another game&hellip;</a></p>
+
+      </article>
+
+      <article id="join">
+
+        <h2>JOIN AN EXISTING GAME</h2>
+
+        <form action="/joingame/" method="post">
+
+          <div class="formgrid">
+
+            <label for="namejoin">your name:</label>
+            <div><input type="text" name="name" id="namejoin" value="" minlength="1" maxlength="10" pattern="[A-Za-z0-9]{1,10}" required /></div>
+
+            <label for="slug">game code:</label>
+            <div><input type="text" name="slug" id="slug" value="" minlength="3" maxlength="8" autocomplete="off" required /></div>
+
+          </div>
+
+          <button>ENTER QUIZ LOBBY&hellip;</button>
+
+        </form>
+
+        <p><a href="#new">or start a new game&hellip;</a></p>
+
+      </article>
+
+    </section>
 
   <% } %>
 
 </main>
+
+<script type="module" src="/js/home.js"></script>
 
 <%- include('partials/_htmlfoot'); -%>

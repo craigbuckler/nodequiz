@@ -14,7 +14,6 @@
 
 *, *:before, *:after {
   box-sizing: border-box;
-  font-weight: 400;
   padding: 0;
   margin: 0;
   line-height: 1.4;
@@ -23,8 +22,16 @@
 body, input, textarea, button, table {
   font-family: var(--font);
   font-size: var(--font-size);
+  font-weight: 400;
+}
+
+body {
   color: var(--color-fore1);
   background-color: var(--color-back1);
+}
+
+strong {
+  font-weight: 600;
 }
 
 header {
@@ -42,11 +49,13 @@ main > :first-child {
 }
 
 h1 {
-  font-size: 2rem;
+  font-size: 2em;
+  font-weight: 400;
 }
 
 h2 {
-  font-size: 1.4rem;
+  font-size: 1.4em;
+  font-weight: 400;
   margin-top: 1em;
 }
 
@@ -58,11 +67,10 @@ a:link, a:visited {
   color: var(--color-link1);
 }
 
-input[type=number] {
+input[type] {
   font-size: var(--font-size);
-  width: 5em;
+  width: 8em;
   font-weight: 600;
-  text-align: center;
   padding: 0.3em 0.3em 0.3em 1em;
   background-color: var(--color-back2);
   border: 3px solid var(--color-right1);
@@ -70,7 +78,12 @@ input[type=number] {
   outline: 0 none;
 }
 
-input[type=number]:invalid {
+input[type=number] {
+  width: 5em;
+  text-align: center;
+}
+
+input:invalid {
   border-color: var(--color-wrong1)
 }
 
@@ -98,4 +111,23 @@ button:hover, button:focus {
 
 .formgrid label {
   text-align: right;
+}
+
+.tabs > *:target ~ :last-child,
+.tabs > *  {
+  display: none;
+}
+
+.tabs > :last-child,
+.tabs > :target {
+  display: block;
+}
+
+/* state */
+body .join, body .start, body .questionactive, body .scoreboard { display: none; }
+body.join .join,
+body.start .start,
+body.questionactive .questionactive
+body.scoreboard .scoreboard {
+  display: block;
 }
