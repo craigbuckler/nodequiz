@@ -115,6 +115,18 @@ export async function gameCreate(data) {
 }
 
 
+// start game
+export async function gameStart( gameId ) {
+
+  return await dbUpdate({
+    table: 'game',
+    values: { time_started: 'NOW()' },
+    where: { id: gameId }
+  });
+
+}
+
+
 // remove a game
 export async function gameRemove( gameId ) {
 
@@ -175,6 +187,29 @@ export async function playersFetch( gameId ) {
 }
 
 
+// fetch next question and answer set
+export async function questionFetch( qNum ) {
+
+  // fetch question
+  const
+    qCount = await questionCount(),
+    question = await dbSelect('SELECT * FROM question ORDER BY id LIMIT 1 OFFSET $1', [ qNum % qCount ]);
+
+  if (question.length !== 1) return null;
+
+  // fetch answers
+  const answer = await dbSelect('SELECT * FROM answer WHERE question_id=$1 ORDER BY id;', [ question[0].id ]);
+
+  if (!answer.length) return null;
+
+  return {
+    text: question[0].text,
+    answer: answer.map( a => { return { text: a.text, correct: a.correct }})
+  };
+
+}
+
+
 // database SELECT
 async function dbSelect(sql, arg = []) {
 
@@ -227,6 +262,42 @@ async function dbInsert(ins) {
   }
 
   return success;
+
+}
+
+
+// database UPDATE
+async function dbUpdate(upd) {
+
+  // UPDATE table SET col1='a', col2=10 WHERE col1='x';
+
+  const
+    sym = [...Object.values( upd.values ), ...Object.values( upd.where )],
+    vkey = Object.keys( upd.values ),
+    val = vkey.map( (k, i) => `${ k }=$${ i + 1 }` ),
+    ckey = Object.keys( upd.where ),
+    cond = ckey.map( (k, i) => `${ k }=$${ i + val.length + 1 }` ),
+    sql = `UPDATE ${ upd.table } SET ${ val.join() } WHERE ${ cond.join() };`,
+    client = upd.client || await pool.connect();
+
+  let updated = 0;
+
+  try {
+
+    // run update
+    const u = await client.query(sql, sym);
+
+    // successful?
+    updated = u.rowCount;
+
+  }
+  catch(err) {
+  }
+  finally {
+    if (!upd.client) client.release();
+  }
+
+  return updated;
 
 }
 

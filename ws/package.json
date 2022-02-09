@@ -11,8 +11,8 @@
   "author": "Craig Buckler",
   "license": "MIT",
   "dependencies": {
-    "pg": "^8.7.1",
-    "ws": "^8.4.2"
+    "pg": "^8.7.3",
+    "ws": "^8.5.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.15"

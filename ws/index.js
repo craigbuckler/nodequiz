@@ -53,7 +53,7 @@ ws.on('connection', (socket, req) => {
 
     // remove player
     if (player) {
-      await player.remove();
+      await player.game.playerRemove( player );
     }
 
   });

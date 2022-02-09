@@ -54,18 +54,8 @@ export class Player {
   // send message to client
   send( type = 'ws', data = {} ) {
     if (this.#socket) {
-      console.log('sending to client', type, data);
       this.#socket.send( `${ type }:${ JSON.stringify(data) }` );
     }
-  }
-
-
-  // disconnect player
-  async remove() {
-
-    await db.playerRemove( this.id );
-    await this.game.playerRemove( this );
-
   }
 
 }

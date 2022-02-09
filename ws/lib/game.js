@@ -4,7 +4,9 @@ import { Player } from './player.js';
 
 
 // active games
-const gameActive = new Map();
+const
+  gameActive = new Map(),
+  timerDefault = 5000;
 
 
 // create and manage active game objects
@@ -33,7 +35,10 @@ export class Game {
   player = new Map();
   cfg = null;
   #event = null;
-  #state = {};
+  #state = {
+    current: 'join',
+    question: 0
+  };
 
   // initialize game
   async create( gameId ) {
@@ -51,7 +56,7 @@ export class Game {
     // monitor incoming events
     this.#event = db.pubsub;
     this.#event.listen();
-    this.#event.on(`event:${ this.gameId }`, e => this.#eventHandler(e));
+    this.#event.on(`event:${ this.gameId }`, async e => await this.#eventHandler(e));
 
     return this.gameId;
 
@@ -59,7 +64,7 @@ export class Game {
 
 
   // incoming server event
-  #eventHandler({ gameId, type, data }) {
+  async #eventHandler({ gameId, type, data }) {
 
     console.log('EVENT', type, data);
 
@@ -77,20 +82,26 @@ export class Game {
 
       // remove player
       case 'playerRemove':
-        this.player.delete( data.id );
+        if (this.player.has(data.id)) {
+          this.player.delete( data.id );
+        }
         break;
 
       // start game
       case 'start':
+        this.#state.current = type;
+        this.#setTimer( this.#questionNext );
+        break;
+
+      // show question
+      case 'questionactive':
+
         break;
 
     }
 
     // send to clients
     if (type) this.clientSend( type, data );
-
-    // console.dir(this, { depth: null, color: true });
-    // console.log(`player count: ${ this.player.size }`)
 
   }
 
@@ -99,14 +110,54 @@ export class Game {
   async clientMessage({ type, data }) {
 
     console.log('from client', type, data);
-
     if (type) await db.broadcast( this.gameId, type, data );
 
   }
 
+
   // send message to all connected clients
   clientSend(type, data) {
     this.player.forEach(p => p.send(type, data))
+  }
+
+  // timer event
+  #setTimer(callback, delay = timerDefault) {
+
+    if (this.#state.timer) {
+      this.#state.timer = clearTimeout( this.#state.timer );
+    }
+
+    const fn = callback.bind(this);
+
+    this.#state.timer = setTimeout(async () => {
+      await fn();
+    }, delay);
+
+  }
+
+
+  // fetch and broadcast next question
+  async #questionNext() {
+
+    // can ask next question?
+    if (
+      this.#state.question >= this.cfg.questions_asked ||
+      !['start', 'scoreboard'].includes(this.#state.current)
+    ) return;
+
+    // fetch next question and answers
+    this.#state.activeQuestion = await db.questionFetch( this.#state.question + this.cfg.question_offset );
+
+    this.#state.question++;
+
+    // send question to clients
+    this.#state.current = 'questionactive';
+    this.clientSend(this.#state.current, {
+      num: this.#state.question,
+      text: this.#state.activeQuestion.text,
+      answer: this.#state.activeQuestion.answer.map(a => a.text)
+    });
+
   }
 
 
@@ -139,6 +190,10 @@ export class Game {
   // remove player from game
   async playerRemove( player ) {
 
+    // delete from database
+    await db.playerRemove( player.id );
+
+    // broadcast event
     await db.broadcast(
       this.gameId,
       'playerRemove',

@@ -1,5 +1,6 @@
 // modules
 import * as player from './player.js';
+import * as question from './question.js';
 
 // DOM
 const dom = {
@@ -52,8 +53,13 @@ ws.addEventListener('message', e => {
       break;
 
     case 'start':
-      state.current = 'start';
+      state.current = type;
       player.start( data.playerId );
+      break;
+
+    case 'questionactive':
+      state.current = type;
+      question.show( data );
       break;
 
   }

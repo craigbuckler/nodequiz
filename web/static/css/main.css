@@ -123,11 +123,41 @@ button:hover, button:focus {
   display: block;
 }
 
+/* timer */
+#timer {
+  display: none;
+  width: 100px;
+  height: 100px;
+  margin: 1em auto;
+  transform: rotate(-90deg);
+}
+
+#timer.countdown {
+  display: block;
+}
+
+#timer circle {
+  stroke: var(--color-wrong1);
+  fill: none;
+  stroke-dasharray: 250;
+  stroke-dashoffset: 0;
+}
+
+#timer.countdown circle {
+  animation: countdown 5s linear 1 forwards;
+}
+
+@keyframes countdown {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 249; }
+}
+
+
 /* state */
 body .join, body .start, body .questionactive, body .scoreboard { display: none; }
 body.join .join,
 body.start .start,
-body.questionactive .questionactive
+body.questionactive .questionactive,
 body.scoreboard .scoreboard {
   display: block;
 }
