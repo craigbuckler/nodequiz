@@ -10,7 +10,9 @@ export class Player {
   name = null;
   gameId = null;
   game = null;
-  #socket = null
+  scoreQuestion = 0;
+  scoreTotal = 0;
+  #socket = null;
 
   // create a player from database data
   constructor(data) {

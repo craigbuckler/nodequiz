@@ -5,11 +5,13 @@
   --color-back2: #fff;
   --color-back3: #aacab3;
   --color-fore1: #333;
+  --color-fore2: #888;
   --color-link1: #003d10;
   --color-wrong1: #9c0004;
   --color-wrong2: #ff0006;
   --color-right1: #00ba32;
   --color-right2: #00ff45;
+  --color-right3: #005a18;
 }
 
 *, *:before, *:after {
@@ -35,7 +37,7 @@ strong {
 }
 
 header {
-  padding: 0.2em 1em;
+  padding: 0.2em 1em 0.3em;
   color: var(--color-back2);
   background-color: var(--color-right1);
 }
@@ -61,6 +63,21 @@ h2 {
 
 p {
   margin-top: 1em;
+}
+
+table {
+  width: auto;
+  table-layout: fixed;
+  margin: 1em auto;
+	font-variant-numeric: tabular-nums;
+	border-spacing: 0;
+	border-collapse: collapse;
+	empty-cells: show;
+}
+
+th, td {
+  text-align: right;
+  padding: 0.2em 0.5em;
 }
 
 a:link, a:visited {
@@ -123,8 +140,70 @@ button:hover, button:focus {
   display: block;
 }
 
+/* state */
+body .join, body .start, body .questionactive, body .scoreboard, body .gameover { display: none; }
+body.join .join,
+body.start .start,
+body.questionactive .questionactive,
+body.scoreboard .scoreboard,
+body.gameover .gameover {
+  display: block;
+}
+
+/* question */
+#question {
+  font-size: 1.5em;
+  text-align: center;
+}
+
+/* answer buttons */
+#answers {
+  list-style-type: none;
+}
+
+#answers button {
+  width: 100%;
+  text-align: left;
+  background-position: 100% 50%;
+  background-repeat: no-repeat;
+  padding-right: 1.5em;
+}
+
+#answers button span {
+  color: var(--color-fore2);
+}
+
+#answers.answered button,
+#answers.answered button:hover,
+#answers.answered button:focus {
+  color: var(--color-fore2);
+  background-color: var(--color-back1);
+  border-color: var(--color-fore2);
+}
+
+#answers.answered button.answered {
+  color: var(--color-right3);
+  background-color: var(--color-back2);
+  border-color: var(--color-right3);
+}
+
+#answers.answered button.right {
+  color: var(--color-back2);
+  background-color: var(--color-right3);
+  border-color: var(--color-right1);
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M20 6L9 17l-5-5"/></svg>');
+}
+
+#answers.answered button.wrong {
+  color: var(--color-back2);
+  background-color: var(--color-wrong1);
+  border-color: var(--color-wrong2);
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M18 6L6 18M6 6l12 12"/></svg>');
+}
+
 /* timer */
 #timer {
+  --countdown: 5000ms;
   display: none;
   width: 100px;
   height: 100px;
@@ -144,20 +223,10 @@ button:hover, button:focus {
 }
 
 #timer.countdown circle {
-  animation: countdown 5s linear 1 forwards;
+  animation: countdown var(--countdown) linear 1 forwards;
 }
 
 @keyframes countdown {
   0% { stroke-dashoffset: 0; }
   100% { stroke-dashoffset: 249; }
-}
-
-
-/* state */
-body .join, body .start, body .questionactive, body .scoreboard { display: none; }
-body.join .join,
-body.start .start,
-body.questionactive .questionactive,
-body.scoreboard .scoreboard {
-  display: block;
 }

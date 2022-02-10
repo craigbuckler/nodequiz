@@ -4,7 +4,8 @@ import { clear } from './utils.js';
 const
   qNum = document.getElementById('qnum'),
   question = document.getElementById('question'),
-  answers = document.getElementById('answers');
+  answers = document.getElementById('answers'),
+  answeredClass = 'answered';
 
 let currentQuestion;
 
@@ -17,29 +18,49 @@ window.addEventListener('keydown', questionAnswered);
 export function show( q ) {
 
   currentQuestion = q;
-  currentQuestion.answered = false;
+  currentQuestion.answered = null;
 
   clear(question);
   clear(answers);
+  answers.classList.remove( answeredClass );
 
   qNum.textContent = q.num;
   question.innerHTML = q.text;
+  currentQuestion.answerNode = [];
 
   q.answer.forEach((ans, idx) => {
     const button = document.createElement('button');
     button.value = idx;
-    button.textContent = `${ idx+1 }: ${ ans }`;
-    answers.appendChild(button);
+    button.innerHTML = `<span>${ idx+1 }:</span> ${ ans }`;
+    currentQuestion.answerNode[idx] = answers.appendChild(button);
   });
 
 }
 
 
-// user answers a question
-function questionAnswered(e) {
+// show correct answer
+export function correctAnswer( correct ) {
 
-  // already answered
-  if (currentQuestion.answered) return;
+  answers.classList.add( answeredClass );
+
+  if (currentQuestion.answered !== null) {
+    currentQuestion.answerNode[ currentQuestion.answered ].classList.remove( answeredClass );
+  }
+
+  currentQuestion.answerNode[ correct ].classList.add('right');
+
+  if (currentQuestion.answered !== null && correct !== currentQuestion.answered) {
+    currentQuestion.answerNode[ currentQuestion.answered ].classList.add('wrong');
+  }
+
+}
+
+
+// user answers a question
+function questionAnswered( e ) {
+
+  // already answered?
+  if ( !currentQuestion || currentQuestion.answered !== null ) return;
 
   let ans = null;
   if (e.type == 'click') {
@@ -58,9 +79,12 @@ function questionAnswered(e) {
 
   if (ans === null) return;
 
-  // valid answer given
-  currentQuestion.answered = true;
+  // highlight answer
+  currentQuestion.answered = ans;
+  answers.classList.add( answeredClass );
+  currentQuestion.answerNode[ans].classList.add( answeredClass );
 
-  console.log(ans);
+  // raise event
+  document.dispatchEvent( new CustomEvent('answered', { detail: ans }) );
 
 }

@@ -63,6 +63,91 @@ export class Game {
   }
 
 
+  // send message to all connected clients
+  clientSend(type, data) {
+    this.player.forEach(p => p.send(type, data))
+  }
+
+
+  // incoming client event
+  async clientMessage({ type, data }) {
+
+    console.log('Data from client', type, data);
+
+    // handle client event (on single server)
+    switch (type) {
+
+      case 'start':
+        // fetch first question
+        this.#state.current = type;
+        if (!await this.#questionNext( timerDefault )) {
+          await db.broadcast( this.gameId, 'gameover' );
+        };
+        break;
+
+      case 'questionanswered':
+        if (this.#state.current !== 'questionactive') return;
+
+        // calculate player score
+        const correct = this.#state.activeQuestion.answer[ data.answer ].correct;
+        data = {
+          playerId: data.playerId,
+          score: correct ? this.cfg.score_correct : this.cfg.score_incorrect,
+          fastest: correct && !this.#state.correctGiven
+        };
+
+        // fastest correct?
+        if (data.fastest) data.score += this.cfg.score_fastest;
+
+        // first answer controls flow
+        if (!this.#state.playersAnswered) {
+
+          let timeout = 100;
+
+          // first response?
+          if (!this.#state.playersAnswered && this.player.size > 1) {
+
+            // send timeout warning
+            timeout =this.cfg.timeout_answered * 1000;
+            await db.broadcast( this.gameId, 'questiontimeout', { timeout });
+
+          }
+
+          // complete question
+          if (timeout) {
+
+            this.#setTimer(async () => {
+
+              // broadcast correct answer
+              await db.broadcast( this.gameId, 'questioncomplete', {
+                correct: this.#state.activeQuestion.answer.findIndex(a => a.correct)
+              });
+
+              // show scoreboard
+              this.#setTimer(async () => {
+                await db.broadcast( this.gameId, 'scoreboard' );
+
+                // next question or game over?
+                if (!(await this.#questionNext( timerDefault ))) {
+                  await db.broadcast( this.gameId, 'gameover' );
+                };
+              });
+
+            }, timeout);
+
+          }
+
+        }
+        break;
+
+    }
+
+    // broadcast to all servers
+    if (type) await db.broadcast( this.gameId, type, data );
+
+  }
+
+
   // incoming server event
   async #eventHandler({ gameId, type, data }) {
 
@@ -70,7 +155,7 @@ export class Game {
 
     if (gameId !== this.gameId || !type) return;
 
-    // handle event
+    // handle server event (on all servers)
     switch (type) {
 
       // add player
@@ -89,36 +174,64 @@ export class Game {
 
       // start game
       case 'start':
+        await db.gameStart( this.gameId );
         this.#state.current = type;
-        this.#setTimer( this.#questionNext );
         break;
 
       // show question
       case 'questionactive':
+        this.#state.current = type;
+        this.#state.question = data.num;
+        this.#state.playersAnswered = 0;
+        this.#state.correctGiven = false;
+        this.#state.activeQuestion = { ...data };
+        data.answer = data.answer.map(a => a.text); // remove correct flag
+        const noAnswer = this.cfg.score_noanswer;
+        this.player.forEach(p => p.scoreQuestion = noAnswer);
+        break;
 
+      // player answers question
+      case 'questionanswered':
+        if (this.#state.current !== 'questionactive') return;
+
+        const p = this.player.get( data.playerId );
+        if (p) {
+          p.scoreQuestion = data.score;
+          this.#state.correctGiven = data.fastest;
+          this.#state.playersAnswered++;
+        }
+
+        type = null; // do not broadcast
+        break;
+
+      // question is complete - show answer
+      case 'questioncomplete':
+        if (this.#state.current !== 'questionactive') return;
+        this.#state.current = type;
+        break;
+
+      // show scoreboard
+      case 'scoreboard':
+        if (this.#state.current !== 'questioncomplete') return;
+        this.#state.current = type;
+        this.player.forEach(p => p.scoreTotal += p.scoreQuestion); // calculate scores
+        data = this.playerAll();
+        break;
+
+      // game over
+      case 'gameover':
+        this.#state.current = type;
+        data = {};
+        await db.gameRemove( this.gameId );
         break;
 
     }
 
-    // send to clients
+    // send to all clients
     if (type) this.clientSend( type, data );
 
   }
 
-
-  // incoming client event
-  async clientMessage({ type, data }) {
-
-    console.log('from client', type, data);
-    if (type) await db.broadcast( this.gameId, type, data );
-
-  }
-
-
-  // send message to all connected clients
-  clientSend(type, data) {
-    this.player.forEach(p => p.send(type, data))
-  }
 
   // timer event
   #setTimer(callback, delay = timerDefault) {
@@ -137,33 +250,29 @@ export class Game {
 
 
   // fetch and broadcast next question
-  async #questionNext() {
+  async #questionNext( delay ) {
 
     // can ask next question?
-    if (
-      this.#state.question >= this.cfg.questions_asked ||
-      !['start', 'scoreboard'].includes(this.#state.current)
-    ) return;
+    if (this.#state.question >= this.cfg.questions_asked) return;
 
-    // fetch next question and answers
-    this.#state.activeQuestion = await db.questionFetch( this.#state.question + this.cfg.question_offset );
+    // fetch next question and answer set
+    const qSet = await db.questionFetch( this.#state.question + this.cfg.question_offset );
+    if (!qSet) return;
 
-    this.#state.question++;
+    qSet.num = this.#state.question + 1;
 
-    // send question to clients
-    this.#state.current = 'questionactive';
-    this.clientSend(this.#state.current, {
-      num: this.#state.question,
-      text: this.#state.activeQuestion.text,
-      answer: this.#state.activeQuestion.answer.map(a => a.text)
-    });
+    this.#setTimer(async () => {
+      await db.broadcast( this.gameId, 'questionactive', qSet );
+    }, delay || 1);
+
+    return qSet.num;
 
   }
 
 
   // return array of player { id, name } objects
   playerAll() {
-    return Array.from( this.player, ([i, p]) => { return { id: p.id, name: p.name } } );
+    return Array.from( this.player, ([i, p]) => { return { id: p.id, name: p.name, score: p.scoreTotal } } );
   }
 
 

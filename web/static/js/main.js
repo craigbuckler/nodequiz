@@ -1,6 +1,7 @@
 // modules
 import * as player from './player.js';
 import * as question from './question.js';
+import { startTimer, stopTimer } from './timer.js';
 
 // DOM
 const dom = {
@@ -36,7 +37,7 @@ ws.addEventListener('message', e => {
   const { type, data } = parseMessage( e.data );
   if (!type || !data) return;
 
-  console.log(type, data);
+  console.log('Data from server:', type, data);
 
   switch (type) {
 
@@ -62,6 +63,25 @@ ws.addEventListener('message', e => {
       question.show( data );
       break;
 
+    case 'questiontimeout':
+      startTimer( data.timeout );
+      break;
+
+    case 'questioncomplete':
+      question.correctAnswer( data.correct );
+      break;
+
+    case 'scoreboard':
+      state.current = type;
+      player.score( data );
+      startTimer();
+      break;
+
+    case 'gameover':
+      state.current = type;
+      stopTimer();
+      break;
+
   }
 
   dom.body.className = state.current;
@@ -78,6 +98,11 @@ ws.addEventListener('close', () => {
 // start button
 dom.start.addEventListener('click', e => {
   if (state.current === 'join') sendMessage('start');
+});
+
+// question answered
+document.addEventListener('answered', e => {
+  if (state.current === 'questionactive') sendMessage('questionanswered', { answer: e.detail });
 });
 
 

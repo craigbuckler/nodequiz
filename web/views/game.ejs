@@ -8,6 +8,8 @@
 
   <h1 class="questionactive">Question <span id="qnum">1</span> of <%= game.questions_asked %></h1>
 
+  <h1 class="scoreboard gameover">Player scores&hellip;</h1>
+
 </header>
 
 <main>
@@ -21,19 +23,25 @@
   <article class="questionactive">
 
     <p id="question"></p>
-    <ol id="answers"></ol>
+    <div id="answers"></div>
 
   </article>
 
-  <article class="scoreboard join start">
+  <article class="join start scoreboard gameover">
 
-    <h2>Players</h2>
+    <h2 class="join start">Players</h2>
 
     <table id="player"></table>
 
   </article>
 
   <button id="start" class="join">START QUIZ WITH <span id="pnum">0</span> PLAYERS</button>
+
+  <article class="gameover">
+
+    <p>Game over. Please <a href="<%= domain %>/#NEW">START</a> or <a href="<%= domain %>/#join"></a>JOIN</a> another game&hellip;</p>
+
+  </article>
 
   <svg id="timer" viewBox="0 0 100 100">
     <circle r="40" cx="50" cy="50" stroke-width="20" stroke-linecap="round"></circle>

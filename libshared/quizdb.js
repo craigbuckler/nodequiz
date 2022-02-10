@@ -102,12 +102,11 @@ export async function gameCreate(data) {
     values: {
       question_offset : Math.floor( Math.random() * qCount ), // random starting question
       questions_asked : clamp(1, data.questions_asked, 50),
-      timeout_max     : clamp(1, data.timeout_max, 50),
-      timeout_answered: clamp(1, data.timeout_answered, 50),
-      score_correct   : clamp(1, data.score_correct, 50),
-      score_fastest   : clamp(1, data.score_fastest, 50),
-      score_incorrect : clamp(1, data.score_incorrect, 50),
-      score_noanswer  : clamp(1, data.score_noanswer, 50)
+      timeout_answered: clamp(5, data.timeout_answered, 60),
+      score_correct   : clamp(-100, data.score_correct, 100),
+      score_fastest   : clamp(-100, data.score_fastest, 100),
+      score_incorrect : clamp(-100, data.score_incorrect, 100),
+      score_noanswer  : clamp(-100, data.score_noanswer, 100)
     },
     return: 'id'
   });
