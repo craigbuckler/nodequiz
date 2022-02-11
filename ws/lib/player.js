@@ -1,3 +1,5 @@
+// game player
+
 // modules
 import * as db from '../libshared/quizdb.js';
 import { GameFactory } from './game.js';
@@ -14,11 +16,13 @@ export class Player {
   scoreTotal = 0;
   #socket = null;
 
-  // create a player from database data
-  constructor(data) {
+
+  // define player
+  constructor( data ) {
 
     if (!data) return;
 
+    // create player from database data
     this.id = data.id || null;
     this.gameId = data.game_id || null;
     this.name = data.name || null;
@@ -38,7 +42,7 @@ export class Player {
     this.game = await GameFactory( gameId );
     if ( !this.game ) return null;
 
-    // send existing players to joining player
+    // send set existing players to new player
     this.send('player', this.game.playerAll())
 
     // create this player
@@ -53,11 +57,13 @@ export class Player {
   }
 
 
-  // send message to client
+  // send message to player
   send( type = 'ws', data = {} ) {
+
     if (this.#socket) {
       this.#socket.send( `${ type }:${ JSON.stringify(data) }` );
     }
+
   }
 
 }

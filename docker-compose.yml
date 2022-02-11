@@ -2,6 +2,7 @@ version: '3'
 
 services:
 
+  # Traefik reverse proxy and load balancer (1 instance)
   reverse-proxy:
     image: traefik:v2.6
     command: --api.insecure=true --providers.docker
@@ -11,6 +12,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
+  # PostgreSQL server (1 instance)
   postgres:
     image: postgres:14
     container_name: dbserver
@@ -22,6 +24,7 @@ services:
     ports:
       - 5432:5432
 
+  # Node HTTP web server (2 instances)
   web:
     build:
       context: ./web
@@ -52,6 +55,7 @@ services:
       - 9229
     command: /bin/sh -c 'npm i && npm run debug'
 
+  # Node.js Web Socket server (3 instances)
   ws:
     build:
       context: ./ws
@@ -79,25 +83,23 @@ services:
       - wsfiles:/home/node/app/node_modules
     ports:
       - 8001
+      - 9229
     command: /bin/sh -c 'npm i && npm run debug'
 
-  pgadmin:
-    image: dpage/pgadmin4
+  # Adminer database client (1 instance)
+  adminer:
+    image: adminer
     labels:
-      - traefik.http.routers.pgadmin-router.rule=Host(`pgadmin.localhost`)
-      - traefik.http.routers.pgadmin-router.service=pgadmin-service
-      - traefik.http.services.pgadmin-service.loadbalancer.server.port=8081
+      - traefik.http.routers.adminer-router.rule=Host(`adminer.localhost`)
+      - traefik.http.routers.adminer-router.service=adminer-service
+      - traefik.http.services.adminer-service.loadbalancer.server.port=8080
     depends_on:
       - postgres
     restart: on-failure
-    env_file: .env
-    volumes:
-      - pgadmin4data:/var/lib/pgadmin
     ports:
-      - 8081
+      - 8080
 
 volumes:
   postgresdata:
-  pgadmin4data:
   webfiles:
   wsfiles:

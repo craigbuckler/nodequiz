@@ -118,11 +118,11 @@ app.get('/game/:slug/:name', async (req, res) => {
   else {
 
     // game has been started or is invalid
-    const url = `${ cfg.domain }/${ slug }`;
+    const url = `${ cfg.domain }/game/${ slug }`;
 
     res.status(gameValid ? 403 : 404).render('error', {
       title: cfg.title,
-      error: gameValid ? `You were too late to join the game at ${ url }` : `The game address ${ url } is not valid. Did you enter it correctly?`
+      error: gameValid ? `You were too late to join the game at ${ url }` : `The game at ${ url } is not valid. Did you enter it correctly?`
     });
 
   }

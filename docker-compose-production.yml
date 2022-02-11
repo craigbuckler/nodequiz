@@ -38,6 +38,8 @@ services:
     depends_on:
       - postgres
     env_file: .env
+    volumes:
+      - ./libshared:/home/node/app/libshared
     ports:
       - 8000
 
@@ -58,6 +60,8 @@ services:
     depends_on:
       - postgres
     env_file: .env
+    volumes:
+      - ./libshared:/home/node/app/libshared
     ports:
       - 8001
 

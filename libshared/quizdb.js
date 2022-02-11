@@ -169,15 +169,6 @@ export async function playerRemove( playerId ) {
 }
 
 
-// count players on a game
-export async function playerCount( gameId ) {
-
-  const res = await dbSelect('SELECT COUNT(1) FROM player WHERE game_id=$1;', [ gameId ]);
-  return res?.[0]?.count;
-
-}
-
-
 // fetch data for all players
 export async function playersFetch( gameId ) {
 

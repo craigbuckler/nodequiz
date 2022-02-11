@@ -1,4 +1,4 @@
-// save form state
+// save entered form values
 const
   DEF = 'formDefault',
   formDefault = JSON.parse( window.localStorage.getItem( DEF ) ) || {};

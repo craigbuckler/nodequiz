@@ -3,13 +3,13 @@ import * as player from './player.js';
 import * as question from './question.js';
 import { startTimer, stopTimer } from './timer.js';
 
-// DOM
+// DOM elements
 const dom = {
   body: document.body,
   start: document.getElementById('start')
 };
 
-// state
+// game state
 const state = {
   current: 'join'
 };
@@ -84,6 +84,7 @@ ws.addEventListener('message', e => {
 
   }
 
+  // show page elements based on current state
   dom.body.className = state.current;
 
 });
@@ -95,18 +96,18 @@ ws.addEventListener('close', () => {
 });
 
 
-// start button
+// start game button event
 dom.start.addEventListener('click', e => {
   if (state.current === 'join') sendMessage('start');
 });
 
-// question answered
+// question answered event
 document.addEventListener('answered', e => {
   if (state.current === 'questionactive') sendMessage('questionanswered', { answer: e.detail });
 });
 
 
-// parse incoming message in format "type:data"
+// parse incoming message in format "type:jsondata"
 // e.g. 'myMessage:{"value",123}' returns { type: "myMessage", data: { "value": 123 }}
 function parseMessage( msg ) {
 

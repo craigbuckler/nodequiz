@@ -1,3 +1,5 @@
+// game handling objects
+
 // modules
 import * as db from '../libshared/quizdb.js';
 import { Player } from './player.js';
@@ -21,6 +23,8 @@ export async function GameFactory( gameId ) {
       gameActive.set( gameId, game );
     }
 
+    console.log(`Game ${ gameId } added - active games on this server: ${ gameActive.size }`);
+
   }
 
   return gameActive.get( gameId ) || null;
@@ -28,8 +32,21 @@ export async function GameFactory( gameId ) {
 }
 
 
+// remove active game
+async function gameComplete( gameId ) {
+
+  if ( !gameActive.has( gameId ) ) return;
+
+  await db.gameRemove( gameId );
+  gameActive.delete( gameId );
+
+  console.log(`Game ${ gameId } removed - active games on this server: ${ gameActive.size }`);
+
+}
+
+
 // individual game class
-export class Game {
+class Game {
 
   gameId = null;
   player = new Map();
@@ -64,7 +81,7 @@ export class Game {
 
 
   // send message to all connected clients
-  clientSend(type, data) {
+  #clientSend(type, data) {
     this.player.forEach(p => p.send(type, data))
   }
 
@@ -80,12 +97,15 @@ export class Game {
       case 'start':
         // fetch first question
         this.#state.current = type;
+
+        // no question found?
         if (!await this.#questionNext( timerDefault )) {
           await db.broadcast( this.gameId, 'gameover' );
         };
         break;
 
       case 'questionanswered':
+        // player answers question
         if (this.#state.current !== 'questionactive') return;
 
         // calculate player score
@@ -96,7 +116,7 @@ export class Game {
           fastest: correct && !this.#state.correctGiven
         };
 
-        // fastest correct?
+        // fastest correct bonus?
         if (data.fastest) data.score += this.cfg.score_fastest;
 
         // first answer controls flow
@@ -107,7 +127,7 @@ export class Game {
           // first response?
           if (!this.#state.playersAnswered && this.player.size > 1) {
 
-            // send timeout warning
+            // send question timeout warning
             timeout =this.cfg.timeout_answered * 1000;
             await db.broadcast( this.gameId, 'questiontimeout', { timeout });
 
@@ -131,6 +151,7 @@ export class Game {
                 if (!(await this.#questionNext( timerDefault ))) {
                   await db.broadcast( this.gameId, 'gameover' );
                 };
+
               });
 
             }, timeout);
@@ -142,16 +163,16 @@ export class Game {
 
     }
 
-    // broadcast to all servers
+    // broadcast message to all servers
     if (type) await db.broadcast( this.gameId, type, data );
 
   }
 
 
-  // incoming server event
+  // incoming event sent to all game servers
   async #eventHandler({ gameId, type, data }) {
 
-    console.log('EVENT', type, data);
+    console.log('Shared server event', type, data);
 
     if (gameId !== this.gameId || !type) return;
 
@@ -222,13 +243,17 @@ export class Game {
       case 'gameover':
         this.#state.current = type;
         data = {};
-        await db.gameRemove( this.gameId );
         break;
 
     }
 
     // send to all clients
-    if (type) this.clientSend( type, data );
+    if (type) this.#clientSend( type, data );
+
+    // clean up completed game
+    if (this.#state.current === 'gameover') {
+      await gameComplete( this.gameId );
+    }
 
   }
 
@@ -270,7 +295,7 @@ export class Game {
   }
 
 
-  // return array of player { id, name } objects
+  // return array of Player { id, name } objects
   playerAll() {
     return Array.from( this.player, ([i, p]) => { return { id: p.id, name: p.name, score: p.scoreTotal } } );
   }

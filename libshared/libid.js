@@ -48,7 +48,7 @@ export function clean(str, length = 10) {
 }
 
 
-// convert characters
+// convert between character sets
 function charConvert(str, charSet) {
 
   return str

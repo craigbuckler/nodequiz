@@ -14,7 +14,7 @@ answers.addEventListener('click', questionAnswered);
 window.addEventListener('keydown', questionAnswered);
 
 
-// show next question
+// show question
 export function show( q ) {
 
   currentQuestion = q;
@@ -47,8 +47,10 @@ export function correctAnswer( correct ) {
     currentQuestion.answerNode[ currentQuestion.answered ].classList.remove( answeredClass );
   }
 
+  // highlight correct answer
   currentQuestion.answerNode[ correct ].classList.add('right');
 
+  // highlight button if wrong
   if (currentQuestion.answered !== null && correct !== currentQuestion.answered) {
     currentQuestion.answerNode[ currentQuestion.answered ].classList.add('wrong');
   }
@@ -84,7 +86,7 @@ function questionAnswered( e ) {
   answers.classList.add( answeredClass );
   currentQuestion.answerNode[ans].classList.add( answeredClass );
 
-  // raise event
+  // raise custom event
   document.dispatchEvent( new CustomEvent('answered', { detail: ans }) );
 
 }

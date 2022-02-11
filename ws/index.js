@@ -1,10 +1,11 @@
+// main Web Socket server
+
 // modules
 import { WebSocketServer } from 'ws';
 import { Player } from './lib/player.js';
 
-
+// configuration
 const
-  // configuration
   cfg = {
     wsPort: process.env.NODE_WSPORT || 8001
   },
@@ -13,14 +14,14 @@ const
   ws = new WebSocketServer({ port: cfg.wsPort, perMessageDeflate: false });
 
 
-// client connection
+// client connected
 ws.on('connection', (socket, req) => {
 
   let player = null;
 
   console.log(`connection from ${ req.socket.remoteAddress }`);
 
-  // received message
+  // message received from client
   socket.on('message', async (msg) => {
 
     // parse message
@@ -36,7 +37,7 @@ ws.on('connection', (socket, req) => {
     }
     else {
 
-      // pass message to game
+      // pass message to game object
       msg.data = msg.data || {};
       msg.data.playerId = player.id;
       await player.game.clientMessage( msg );
@@ -46,22 +47,22 @@ ws.on('connection', (socket, req) => {
 
   });
 
-  // closed
+  // client connection closed
   socket.on('close', async () => {
-
-    console.log(`disconnection from ${ req.socket.remoteAddress }`);
 
     // remove player
     if (player) {
       await player.game.playerRemove( player );
     }
 
+    console.log(`disconnection from ${ req.socket.remoteAddress }`);
+
   });
 
 });
 
 
-// parse incoming message in format "type:data"
+// parse incoming message in format "type:jsondata"
 // e.g. 'myMessage:{"value",123}' returns { type: "myMessage", data: { "value": 123 }}
 function parseMessage( msg ) {
 

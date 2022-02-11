@@ -1,4 +1,4 @@
-// countdown timer
+// countdown timer clock
 const
   timerNode = document.getElementById('timer'),
   startClass = 'countdown',

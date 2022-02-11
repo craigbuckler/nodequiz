@@ -5,7 +5,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "debug": "nodemon ./index.js",
+    "debug": "nodemon --trace-warnings --inspect=0.0.0.0:9229 ./index.js",
     "start": "node ./index.js"
   },
   "author": "Craig Buckler",

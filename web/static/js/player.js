@@ -1,4 +1,4 @@
-// player list
+// shows list of players
 import { clear } from './utils.js';
 import { startTimer } from './timer.js';
 
