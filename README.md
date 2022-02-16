@@ -52,17 +52,17 @@ To debug, you must bypass the load balancer and attach to a single instance of t
 docker container ls
 ```
 
-Note the PORTS mappings and NAMES:
+Note the `PORTS` mappings and `NAMES`:
 
 ```txt
 PORTS                                              NAMES
+0.0.0.0:59961->8001/tcp, 0.0.0.0:59962->9229/tcp   nodequiz_ws_1
 0.0.0.0:59956->8001/tcp, 0.0.0.0:59957->9229/tcp   nodequiz_ws_2
 0.0.0.0:59958->8001/tcp, 0.0.0.0:59959->9229/tcp   nodequiz_ws_3
-0.0.0.0:59951->8080/tcp                            nodequiz_adminer_1
-0.0.0.0:59961->8001/tcp, 0.0.0.0:59962->9229/tcp   nodequiz_ws_1
 0.0.0.0:59952->8000/tcp, 0.0.0.0:59953->9229/tcp   nodequiz_web_1
 0.0.0.0:59954->8000/tcp, 0.0.0.0:59955->9229/tcp   nodequiz_web_2
 0.0.0.0:5432->5432/tcp                             dbserver
+0.0.0.0:59951->8080/tcp                            nodequiz_adminer_1
 0.0.0.0:80->80/tcp, 0.0.0.0:8080->8080/tcp         nodequiz_reverse-proxy_1
 ```
 
