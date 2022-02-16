@@ -201,6 +201,7 @@ export async function questionFetch( qNum ) {
 
 
 // database SELECT
+// pass SQL string and array of parameters
 async function dbSelect(sql, arg = []) {
 
   const client = await pool.connect();
@@ -220,6 +221,7 @@ async function dbSelect(sql, arg = []) {
 
 
 // database INSERT
+// pass object: { table: <tablename>, values: <{ n1: v1,... }>, return: <field> }
 async function dbInsert(ins) {
 
   const
@@ -257,9 +259,8 @@ async function dbInsert(ins) {
 
 
 // database UPDATE
+// pass object: { table: <tablename>, values: <{ n1: v1,... }>, where: <{ n1: v1,... }> }
 async function dbUpdate(upd) {
-
-  // UPDATE table SET col1='a', col2=10 WHERE col1='x';
 
   const
     sym = [...Object.values( upd.values ), ...Object.values( upd.where )],
@@ -293,6 +294,8 @@ async function dbUpdate(upd) {
 
 
 // database delete
+// pass object: { table: <tablename>, where: <{ n1: v1,... }> }
+// logical AND is used for all where name/value pairs
 async function dbDelete(del) {
 
   const
@@ -329,6 +332,9 @@ class PubSub extends EventEmitter {
 
   async listen() {
 
+    if (this.listening) return;
+    this.listening = true;
+
     const client = await pool.connect();
 
     client.on('notification', event => {
@@ -360,6 +366,7 @@ class PubSub extends EventEmitter {
 }
 
 export const pubsub = new PubSub();
+await pubsub.listen();
 
 
 // broadcast an event

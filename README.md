@@ -29,7 +29,7 @@ docker-compose up
 
 Then open <http://quiz.localhost/> in your browser and start or join a quiz.
 
-The Traefic load balencer dashboard is accessed at <http://localhost:8080/>
+The Traefic load balancer dashboard is accessed at <http://localhost:8080/>
 
 The [Adminer](https://www.adminer.org/) database client is accessed at <http://adminer.localhost/> with the following credentials:
 

@@ -51,11 +51,11 @@ class Game {
   gameId = null;
   player = new Map();
   cfg = null;
-  #event = null;
   #state = {
     current: 'join',
     question: 0
   };
+  #handlerFunction = async e => await this.#eventHandler(e);
 
   // initialize game
   async create( gameId ) {
@@ -71,9 +71,7 @@ class Game {
       .forEach( p => this.playerAdd( new Player(p) ));
 
     // monitor incoming events
-    this.#event = db.pubsub;
-    this.#event.listen();
-    this.#event.on(`event:${ this.gameId }`, async e => await this.#eventHandler(e));
+    db.pubsub.on(`event:${ this.gameId }`, this.#handlerFunction);
 
     return this.gameId;
 
@@ -252,7 +250,10 @@ class Game {
 
     // clean up completed game
     if (this.#state.current === 'gameover') {
+
+      db.pubsub.off(`event:${ this.gameId }`, this.#handlerFunction);
       await gameComplete( this.gameId );
+
     }
 
   }
